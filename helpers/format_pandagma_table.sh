@@ -15,15 +15,24 @@
 #  10/01/23  sbc  created
 #  10/10/23 eksc  adapted
 
+PREFIX=$1
+
 # From 23_syn_pan_pctl25_posn_cds.fna, extract table of IDs and positions
+echo -e "\nExtract IDs and positions..."
 grep '>' 23_syn_pan_pctl25_posn_cds.fna | 
   perl -pe 's/^>//; s/ /\t/g; s/^(\w+\.\w+\.([^_]+)_(\d+)_(\w+))/$1\t$2\t$3\t$4/' |
   sort -k4,4 > 23_syn_pan_pctl25_posn.tsv
 
 # Join to table 22_syn_pan_aug_extra_pctl25_posn.hsh.tsv
+echo -e "\nJoin to extra..."
 join -1 1 -2 4 -a 1 22_syn_pan_aug_extra_pctl25_posn.hsh.tsv 23_syn_pan_pctl25_posn.tsv | 
-  perl -pe 's/ /\t/g' > 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.tsv
- 
-echo
-echo "Table to load: 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.tsv"
-echo
+  perl -pe 's/ /\t/g' |
+  awk -v PRE=$PREFIX '{print PRE $0}' > 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.tsv
+
+# Add header
+echo -e "Add header..."
+echo -e "panID\ttrans\ttransChr\ttransStart\ttransEnd\ttransStrand\tlongPanID\tpanChr\tignore\tpanStart\tpanEnd\tpanStrand\texemplar" |
+  cat - 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.tsv > 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv
+
+echo -e "\n\nTable to load: 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv\n"
+
