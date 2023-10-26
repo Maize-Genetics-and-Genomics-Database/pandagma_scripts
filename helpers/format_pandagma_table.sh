@@ -9,11 +9,15 @@
 # Example:
 #   pan00001 Zd00001aa032704_T001 Zd-Gigi_PanAnd-1.chr9 48262170 48264952 + Zea.pan3.chr09_039400_pan00001 chr09 039400 3940000 3941000 + Zm00001eb376300_T001
 #
-# NOTE: Run this script from within the pandagma output file
+# NOTE: Run this script from within the pandagma output directory
 #
 # History:
 #  10/01/23  sbc  created
 #  10/10/23 eksc  adapted
+
+# IMPORTANT NOTE! This uses data from the 25th percentile, that is, pan-gene with a
+#                 minimum of 25% the number of annotations.
+#                 To build a loading table with all pan-genes, use format_loading_table.pl
 
 PREFIX=$1
 
@@ -30,9 +34,7 @@ join -1 1 -2 4 -a 1 22_syn_pan_aug_extra_pctl25_posn.hsh.tsv 23_syn_pan_pctl25_p
   awk -v PRE=$PREFIX '{print PRE $0}' > 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.tsv
 
 # Add header
-echo -e "Add header..."
 echo -e "panID\ttrans\ttransChr\ttransStart\ttransEnd\ttransStrand\tlongPanID\tpanChr\tignore\tpanStart\tpanEnd\tpanStrand\texemplar" |
-  cat - 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.tsv > 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv
-
+cat - 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.tsv > 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv
 echo -e "\n\nTable to load: 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv\n"
 
