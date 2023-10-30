@@ -13,7 +13,7 @@ use Data::Dumper;
 
 my $usage = <<EOS
     usage: 
-      perl  restore_v3_ids <xref-file> <gff-file>
+      perl  restore_v3_ids <xref-file> <table-file>
       
     example:
       perl restore_v3_ids.pl data/v3_sref.txt 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv
