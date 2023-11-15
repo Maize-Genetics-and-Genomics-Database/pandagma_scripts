@@ -21,7 +21,7 @@ my $usage = <<EOS
       -g: [OPTIONAL] glob pattern for files, sans directory
       -o: [OPTIONAL] directory for output files
       -p: [OPTIONAL] prefix to add to file names
-      -t: table/FASTA/tree [DEFAULT=table]
+      -t: table/FASTA/tree/generic [DEFAULT=table]
       
     examples:
       perl restore_v3_ids.pl -t table data/v3_sref.txt 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv
@@ -57,7 +57,7 @@ EOS
   }
   close XREF;
 #print Dumper(%xref);
-print "File type: $file_type, directory: $dir, output directory: $outdir, prefix: $prefix\n";
+#print "File type: $file_type, directory: $dir, output directory: $outdir, prefix: $prefix\n";
 
   if ($file_type eq 'table') {
 print "processTable()\n";
@@ -65,7 +65,6 @@ exit;
     processTable($infile, %xref);
   }
   elsif ($file_type eq 'FASTA') {
-print "processFASTA()\n";
     if ($infile && $dir eq '') {
       processOneFASTA($infile, '', %xref);
     }
@@ -74,13 +73,19 @@ print "processFASTA()\n";
     }
   }
   elsif ($file_type eq 'tree') {
-print "processTree()\n";
     if ($infile && $dir eq '') {
       processOneTree($infile, '', %xref);
     }
     else {
       processTrees($dir, $outdir, $prefix, $glob, %xref);
     }
+  }
+  elsif ($file_type eq 'generic') {
+    if ($dir ne '') {
+      print "\n\nNOT IMPLEMENTED FOR DIRECTORIES\n\n";
+      exit;
+    }
+    processGenericFile($infile, %xref);
   }
   else {
     print "\nERROR: unknown file type: $file_type\n\n";
@@ -110,6 +115,54 @@ sub processFASTA {
 #last if ($count > 0);
   }
 }#processFASTA
+
+
+sub processGenericFile {
+  my ($infile, %xref) = @_;
+
+  my ($old_id, $old_gm, $new_id, $new_gm, $tr);
+  
+  open IN, "<$infile" or die "\nUnable to open $infile: $1\n\n";
+  while (<IN>) {
+    my $line = $_;
+    
+    # Handle transcripts
+    while ($line =~ /(Zm00001ca\d+)_T(\d+)/g) {
+      $old_gm = $1;
+      $tr = $2;
+      $old_id = $old_gm . "_T$2";
+#print "Found v3 gm $old_id";
+      if ($xref{$old_gm}) {
+        if ($xref{$old_gm} =~ /GRMZM/) {
+          $new_id = $xref{$old_gm} . "_T$tr";
+#print "  translate to $new_id\n";
+          $line =~ s/$old_id/$new_id/;
+        }
+        else {
+          $new_id = $xref{$old_gm};
+          $new_id =~ s/FG/FTG/;
+#print "  translate to FGenesH $new_id\n";
+          $line =~ s/$old_id/$new_id/;
+#print "translated line: $line";
+        }
+      }
+    }#each transcript match
+    
+    # Handle gene models
+    while ($line =~ /(Zm00001ca\d+)/g) {
+      $old_gm = $1;
+#print "Found v3 gm $old_gm";
+      if ($xref{$old_gm}) {
+        $new_gm= $xref{$old_gm};
+#print "  translate to $new_gm\n";
+        $line =~ s/$old_gm/$new_gm/;
+      }
+    }#each gene model match
+
+    print $line;
+  }
+  close IN;
+}#processGenericFile
 
 
 sub processOneFASTA {
@@ -171,7 +224,7 @@ sub processOneTree {
       $old_gm = $1;
       $tr = $2;
       $old_id = $old_gm . "_T$2";
-#print "Found v3 gm $old_id";
+print "Found v3 gm $old_id";
       if ($xref{$old_gm}) {
         if ($xref{$old_gm} =~ /GRMZM/) {
           $new_id = $xref{$old_gm} . "_T$tr";
