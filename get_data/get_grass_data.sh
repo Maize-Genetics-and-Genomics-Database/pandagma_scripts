@@ -17,17 +17,18 @@ cd data_orig
 #: << "END"
 # Outside data is in ../../grasses - copy and rename
 echo "Copy outside grass data..."
-cp ../grasses/Brachypodium_distachyon-3.0.* .
-cp ../grasses/Eragrostis_tef_Salk_teff_dabbi-3.0* .
-cp ../grasses/Hordeum_vulgare_Morex-3.0.* .
-cp ../grasses/Oryza_sativa_IRGSP-1.0.* .
-cp ../grasses/Panicum_hallii_590-3.2.* .
-cp ../grasses/Panicum_hallii_591-2.2.* .
-cp ../grasses/Saccharum_spontaneum_Sspon.* .
-cp ../grasses/Setaria_italica-2.0.* .
-cp ../grasses/Setaria_viridis-2.0.* .
-cp ../grasses/Sorghum_bicolor_NCBI-3.0.* .
-cp ../grasses/Triticum_aestivum_IWGSC.* .
+cp /project/maizegdb/ethy/grasses/Asativa_sang.v1.1.* .
+cp /project/maizegdb/ethy/grasses/Brachypodium_distachyon-3.0.* .
+#cp /project/maizegdb/ethy/grasses/Eragrostis_tef_Salk_teff_dabbi-3.0* .
+cp /project/maizegdb/ethy/grasses/Hordeum_vulgare_Morex-3.0.* .
+cp /project/maizegdb/ethy/grasses/Oryza_sativa_IRGSP-1.0.* .
+cp /project/maizegdb/ethy/grasses/Panicum_hallii_590-3.2.* .
+cp /project/maizegdb/ethy/grasses/Panicum_hallii_591-2.2.* .
+#cp /project/maizegdb/ethy/grasses/Saccharum_spontaneum_Sspon.* .
+cp /project/maizegdb/ethy/grasses/Setaria_italica-2.0.* .
+cp /project/maizegdb/ethy/grasses/Setaria_viridis-2.0.* .
+cp /project/maizegdb/ethy/grasses/Sorghum_bicolor_NCBI-3.0.* .
+#cp /project/maizegdb/ethy/grasses/Triticum_aestivum_IWGSC.* .
 
 # Normalize the files by ensuring they are all gzipped
 echo "...and gzip"
@@ -40,11 +41,11 @@ echo
 
 #### GET CDS FILES ####
 echo "Get CDS files..."
-curl -O $url_base/Av-Kellogg1287_8-REFERENCE-PanAnd-1.0/Av-Kellogg1287_8-REFERENCE-PanAnd-1.0_Av00001aa.1.cds.fa.gz
-curl -O $url_base/Td-FL_9056069_6-DRAFT-PanAnd-1.0/Td-FL_9056069_6-DRAFT-PanAnd-1.0_Td00001aa.1.cds.fa.gz
-curl -O $url_base/Td-KS_B6_1-DRAFT-PanAnd-1.0/Td-KS_B6_1-DRAFT-PanAnd-1.0_Td00002aa.1.cds.fa.gz
-curl -O $url_base/Td-McKain334_5-DRAFT-PanAnd-1.0/Td-McKain334_5-DRAFT-PanAnd-1.0_Td00003aa.1.cds.fa.gz
-curl -O $url_base/Zm-B73-REFERENCE-NAM-5.0/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.cds.fa.gz
+curl -O $url_base/Av-Kellogg1287_8-REFERENCE-PanAnd-1.0/Av-Kellogg1287_8-REFERENCE-PanAnd-1.0_Av00001aa.1.canonical.cds.fa.gz
+#curl -O $url_base/Td-FL_9056069_6-DRAFT-PanAnd-1.0/Td-FL_9056069_6-DRAFT-PanAnd-1.0_Td00001aa.1.cds.fa.gz
+#curl -O $url_base/Td-KS_B6_1-DRAFT-PanAnd-1.0/Td-KS_B6_1-DRAFT-PanAnd-1.0_Td00002aa.1.cds.fa.gz
+#curl -O $url_base/Td-McKain334_5-DRAFT-PanAnd-1.0/Td-McKain334_5-DRAFT-PanAnd-1.0_Td00003aa.1.cds.fa.gz
+curl -O $url_base/Zm-B73-REFERENCE-NAM-5.0/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.canonical.cds.fa.gz
 
 # Later:
 #curl -O $url_base/Ab-Traiperm_572-DRAFT-PanAnd-1.0/Ab-Traiperm_572-DRAFT-PanAnd-1.0_Ab00001aa.1.cds.fa.gz
@@ -130,7 +131,6 @@ curl -O $url_base/Zm-B73-REFERENCE-NAM-5.0/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.
 #curl -O $url_base/Ud-Pasquet1171-DRAFT-PanAnd-1.0/Ud-Pasquet1171-DRAFT-PanAnd-1.0_Ud00001aa.1.protein.gz
 #curl -O $url_base/Vc-Pasquet1098-DRAFT-PanAnd-1.0/Vc-Pasquet1098-DRAFT-PanAnd-1.0_Vc00001aa.1.protein.gz
 #END
-exit
 
 
 ### EXTRACT LONGEST AS CANONICAL WHERE NEEDED; CDS ###
@@ -231,10 +231,10 @@ for file in *.protein.fa.gz; do
     printf "  Printed ../data/$base.canonical.protein.fa\n"
   fi
 done
-
+#END
 
 # Test numbers of IDs before and after
-cd /project/maizegdb/ethy/pandagma/data
+cd /project/maizegdb/ethy/grass-fam/pandagma/data
 for file in *.cds.fa; do
   base=`basename $file .cds.fa`
   echo $base
@@ -249,10 +249,10 @@ done
 # The following are now removed as part of the cds and protein processing steps above
 #  Os01t0235400 Os01t0275300 Os01t0337700 Os01t0782300 Os03t0355900 Os03t0359100 Os03t0776100 Os04t0644950 Os07t0251200 Os08t0199200 Os09t0347401 Os11t0533550 Os11t0594900 Os12t0113001 -petB -petD -rpl16 -rps16
   rm lis.*
-
+#END
 
 ### DERIVE BED FILES, PREFIXING THE CHROMOSOMES WITH THE ANNOTATION ID FIRST ###
-cd /project/maizegdb/ethy/pandagma/data_orig
+cd /project/maizegdb/ethy/grass-fam/pandagma/data_orig
 echo
 echo "Derive BED from GFF. "
 echo "Add annotation name (e.g. Av00001aa000001 or Bd99999aa) as prefix to the chromosome/scaffold names."
@@ -285,9 +285,10 @@ for file in *gff3.gz; do
       ../bin/gff_to_bed6_mRNA_simple.awk > ../data/$base.bed 
   fi
 done
+#END
 
 # Test IDs in cds, protein, and bed files
-cd /project/maizegdb/ethy/pandagma/data
+cd /project/maizegdb/ethy/grass-fam/pandagma/data
 for file in *.cds.fa; do
   base=`basename $file .canonical.cds.fa`
   echo $base
@@ -299,7 +300,7 @@ done
 
 # Check counts in cds, protein, and bed files.
 # Counts in bed files should be higher than cds or protein if there are multiple splice variants
-cd /project/maizegdb/ethy/pandagma/data
+cd /project/maizegdb/ethy/grass-fam/pandagma/data
 for file in *.cds.fa; do
   base=`basename $file .canonical.cds.fa`
   echo $base
@@ -314,15 +315,16 @@ done
 ### GZIP THE DERIVED DATA FILES ###
 echo
 echo "Compress the derived files in data"
-cd /project/maizegdb/ethy/pandagma
+cd /project/maizegdb/ethy/grass-fam/pandagma
 for file in data/*fa data/*bed; do 
+  echo $file
   gzip $file &
 done
 wait
 
 
 ### EXPECTED "QUOTAS" ###
-cd /project/maizegdb/ethy/pandagma
+cd /project/maizegdb/ethy/grass-fam/pandagma
 cat << 'DATA' > data/expected_quotas.tsv
 Av00001aa 2
 Bd99999aa 2
