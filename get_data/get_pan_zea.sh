@@ -16,7 +16,7 @@ url_base="https://download.maizegdb.org"
 
 cd data_orig
 
-: << "END"
+#: << "END"
 #### GET CDS FILES ####
 
 curl -O $url_base/Zd-Gigi-REFERENCE-PanAnd-1.0/Zd-Gigi-REFERENCE-PanAnd-1.0_Zd00001aa.1.cds.fa.gz
@@ -32,7 +32,7 @@ curl -O $url_base/Zm-B73-REFERENCE-GRAMENE-4.0/Zm-B73-REFERENCE-GRAMENE-4.0_Zm00
 curl -O $url_base/Zm-B73-REFERENCE-NAM-5.0/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.canonical.cds.fa.gz
 curl -O $url_base/Zm-B97-REFERENCE-NAM-1.0/Zm-B97-REFERENCE-NAM-1.0_Zm00018ab.1.canonical.cds.fa.gz
 # CIMBL55 v1 gene models were lifted over to v2; although v2 sequence is better, there are errors in the lifted file
-curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-1.0/Zm-CIMBL55-REFERENCE-CAU-1.0_Zm00067a.1.cds.fa
+#curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-1.0/Zm-CIMBL55-REFERENCE-CAU-1.0_Zm00067a.1.cds.fa
 #curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-2.0/Zm-CIMBL55-REFERENCE-CAU-2.0_Zm00067a.1.cds.fa.gz
 curl -O $url_base/Zm-Chang-7_2-REFERENCE-CAAS_FIL-1.0/Zm-Chang-7_2-REFERENCE-CAAS_FIL-1.0_Zm00093aa.1.cds.fa.gz
 curl -O $url_base/Zm-CML103-REFERENCE-NAM-1.0/Zm-CML103-REFERENCE-NAM-1.0_Zm00021ab.1.canonical.cds.fa.gz
@@ -107,7 +107,7 @@ curl -O $url_base/Zm-B73-REFERENCE-GRAMENE-4.0/Zm-B73-REFERENCE-GRAMENE-4.0_Zm00
 curl -O $url_base/Zm-B73-REFERENCE-NAM-5.0/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3.gz
 curl -O $url_base/Zm-B97-REFERENCE-NAM-1.0/Zm-B97-REFERENCE-NAM-1.0_Zm00018ab.1.gff3.gz
 # CIMBL55 v2 gene models were lifted over. NOTE that gm names don't change between v1 and v2
-curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-1.0/Zm-CIMBL55-REFERENCE-CAU-1.0_Zm00067a.1.gff3
+#curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-1.0/Zm-CIMBL55-REFERENCE-CAU-1.0_Zm00067a.1.gff3
 #curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-2.0/gene_37493_liftover.gff.gz
 #mv gene_37493_liftover.gff.gz Zm-CIMBL55-REFERENCE-CAU-2.0_Zm00067a.1.gff3.gz
 curl -O $url_base/Zm-Chang-7_2-REFERENCE-CAAS_FIL-1.0/Zm-Chang-7_2-REFERENCE-CAAS_FIL-1.0_Zm00093aa.1.gff3.gz
@@ -181,7 +181,7 @@ curl -O $url_base/Zm-B73-REFERENCE-GRAMENE-4.0/Zm-B73-REFERENCE-GRAMENE-4.0_Zm00
 curl -O $url_base/Zm-B73-REFERENCE-NAM-5.0/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.protein.fa.gz
 curl -O $url_base/Zm-B97-REFERENCE-NAM-1.0/Zm-B97-REFERENCE-NAM-1.0_Zm00018ab.1.protein.fa.gz
 # CIMBL55 v2 gene models were lifted over
-curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-1.0/Zm-CIMBL55-REFERENCE-CAU-1.0_Zm00067a.1.protein.fa
+#curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-1.0/Zm-CIMBL55-REFERENCE-CAU-1.0_Zm00067a.1.protein.fa
 #curl -O $url_base/Zm-CIMBL55-REFERENCE-CAU-2.0/Zm-CIMBL55-REFERENCE-CAU-2.0_Zm00067a.1.protein.fa.gz
 curl -O $url_base/Zm-Chang-7_2-REFERENCE-CAAS_FIL-1.0/Zm-Chang-7_2-REFERENCE-CAAS_FIL-1.0_Zm00093aa.1.protein.fa.gz
 curl -O $url_base/Zm-CML103-REFERENCE-NAM-1.0/Zm-CML103-REFERENCE-NAM-1.0_Zm00021ab.1.protein.fa.gz
@@ -272,7 +272,7 @@ awk '{print $1}' | ../bin/fasta_to_table.awk | awk '{if(!($1~/GRMZM/)){print}}' 
 awk -v FS="\t" '{print ">" $1; print $2}' > Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.protein.fa
 rm Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.protein.fa.gz
 gzip Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.protein.fa
-END
+#END
 
 
 ### EXTRACT LONGEST AS CANONICAL WHERE NEEDED ###
@@ -305,9 +305,9 @@ cp *canonical.cds.fa ../data/
 
 
 ### FIX AND COPY PROTEIN FILES ###
+# Protein ids must match CDS ids
 echo
 echo "Fix then copy protein files"
-echo "TEST THIS"
 for file in *protein.fa.gz; do
   gunzip $file &
 done
@@ -329,7 +329,7 @@ for path in *gff3.gz; do
   base=`basename $path .gz`
   echo $base
   export annot_name=$(echo $base | perl -pe 's/(.+)-REFERENCE[-_](.+\d)\.\d_Z\w\d+.+/$1_$2/')
-  zcat $path | ../bin/gff_to_bed6_mRNA.awk | 
+  zcat $path | ../bin/gff_to_bed7_mRNA.awk | 
     perl -pe '$prefix=$ENV{'annot_name'}; s/^(\D+)/$prefix.$1/; s/transcript://' |
     cat > ../data/$base.bed &
 done
