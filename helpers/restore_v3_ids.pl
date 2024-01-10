@@ -19,7 +19,7 @@ my $usage = <<EOS
     options:
       -d: [OPTIONAL] directory, in which case <file> is the file name pattern
       -g: [OPTIONAL] glob pattern for files, sans directory
-      -o: [OPTIONAL] directory for output files
+      -o: [OPTIONAL] directory for output files, if operating on a directory
       -p: [OPTIONAL] prefix to add to file names
       -t: table/FASTA/tree/generic [DEFAULT=table]
       
@@ -41,7 +41,8 @@ EOS
   if (defined($cmd_opts{'g'})) { $glob = $cmd_opts{'g'}; } 
   if (defined($cmd_opts{'o'})) { $outdir = $cmd_opts{'o'}; } 
   if (defined($cmd_opts{'p'})) { $prefix = $cmd_opts{'p'}; } 
-  if (defined($cmd_opts{'t'})) { $file_type = $cmd_opts{'t'}; } 
+  if (defined($cmd_opts{'t'})) { $file_type = $cmd_opts{'t'}; }
+#print "file_type: $file_type, dir: $dir, glob: $glob, outdir: $outdir, prefix: $prefix, file_type: $file_type\n\n";
   
   my ($xreffile, $infile) = @ARGV;
   if (!$xreffile || (!$dir && !$infile)) {
@@ -60,8 +61,6 @@ EOS
 #print "File type: $file_type, directory: $dir, output directory: $outdir, prefix: $prefix\n";
 
   if ($file_type eq 'table') {
-print "processTable()\n";
-exit;
     processTable($infile, %xref);
   }
   elsif ($file_type eq 'FASTA') {
@@ -106,11 +105,11 @@ sub processFASTA {
   closedir $dh;
   
 #print "All files:\n" . Dumper(@files);
-  my $count = 0;
+  my $count = 1;
   for my $file (@files) {
     print "\n>>>> $count process file $dir/$file.\n";
     my $outfile = "$outdir/$prefix$file";
-    processOneFASTA($file, $outfile, %xref);
+    processOneFASTA("$dir/$file", $outfile, %xref);
     $count++;
 #last if ($count > 0);
   }
@@ -175,7 +174,7 @@ sub processOneFASTA {
   my ($old_id, $old_gm);
   open IN, "<$infile" or die "\nUnable to open $infile: $1\n\n";
   while (<IN>) {
-#    if (/>\w+\s+(\w+)/) {
+#print $_;
     if (/>(\w+)/) {
       $old_id = $1;
       $old_gm = $1;
@@ -218,13 +217,13 @@ sub processOneTree {
   }
   
   my ($old_id, $old_gm, $new_id, $tr);
-  open IN, "<$infile" or die "\nUnable to open $infile: $1\n\n";
+  open IN, "<$dir/$infile" or die "\nUnable to open $infile: $1\n\n";
   while (<IN>) {
     while (/(Zm00001ca\d+)_T(\d+)/g) {
       $old_gm = $1;
       $tr = $2;
       $old_id = $old_gm . "_T$2";
-print "Found v3 gm $old_id";
+#print "Found v3 gm $old_id\n";
       if ($xref{$old_gm}) {
         if ($xref{$old_gm} =~ /GRMZM/) {
           $new_id = $xref{$old_gm} . "_T$tr";
@@ -271,23 +270,13 @@ sub processTable {
     $gm1 =~ s/_T\d+//;
     my $gm2 = $fields[$f2];
     $gm2 =~ s/_T\d+//;
-    if ($xref{$gm1} =~ /GRMZM/) {
-      if ($xref{$gm1}) {
-        s/$gm1/$xref{$gm1}/g;
-      }
-      if ($xref{$gm2}) {
-        s/$gm2/$xref{$gm2}/g;
-      }
+    if ($gm1 =~ /Zm00001c/ && $xref{$gm1}) {
+      s/$gm1/$xref{$gm1}/g;
+      s/_FG/_FGT/;  # in case an FgenesH identifier
     }
-    else {
-      # This is an FgenesH identifier
-      if ($xref{$gm1}) {
-        s/$gm1/$xref{$gm1}/g;
-      }
-      if ($xref{$gm2}) {
-        s/$gm2/$xref{$gm2}/g;
-      }
-      s/_FG/_FGT/;
+    if ($gm2 =~ /Zm00001c/ && $xref{$gm2}) {
+      s/$gm2/$xref{$gm2}/g;
+      s/_FG/_FGT/;  # in case an FgenesH identifier
     }
     print "$_\n";
   }
@@ -306,7 +295,7 @@ print "glob: $glob\n";
 #print "All files:\n" . Dumper(@files);
   my $count = 1;
   for my $file (@files) {
-    print "\n>>>> $count process file $dir/$file.\n";
+    print "\n>>>> $count process file $dir/$file\n";
     my $outfile = "$outdir/$prefix$file";
     processOneTree($file, $outfile, %xref);
     $count++;
