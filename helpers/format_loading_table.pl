@@ -30,8 +30,6 @@ EOS
   if (!$workdir) {
     die $usage;
   }
-print "Prefix is $prefix\nNOT TESTED\n\n";
-exit;
 
   # Used all over
   my ($filename, @fields, $count);
@@ -64,7 +62,6 @@ exit;
 #print Dumper(%positions);
 #print "\n\npositions for Zd00001aa038416_T001:\n" . Dumper($positions{'Zd00001aa038416_T001'});
 #print "\n\npositions for Zd00001aa032704_T001:\n" . Dumper($positions{'Zd00001aa032704_T001'});
-#exit;
 
   # Get exemplar for each pan-gene
   print "\nGET EXEMPLARS\n";
@@ -75,14 +72,15 @@ exit;
     chomp;chomp;
     next if (!/>/);
     />(\w+)\s(.*)/;
-    $pan_gene_exemplars{$1} = $2;
+    my $pan_gene = $prefix . $1;
+    $pan_gene_exemplars{$pan_gene} = $2;
   }
   close IN;
 #print Dumper(%pan_gene_exemplars);
 
   # Build loading table from 18_syn_pan_aug_extra.hsh.tsv (panID, trans)
   # panID	trans	transChr transStart	transEnd transStrand panChr panStart panEnd	panStrand	exemplar
-  print "\WRITE TABLE\n";
+  print "\nWRITE TABLE $workdir/pandagma_load.txt\n";
   $filename = "$workdir/18_syn_pan_aug_extra.hsh.tsv\n";
   open IN, "<$filename" or die "\nUnable to open $filename: $!\n\n";
   open OUT, ">$workdir/pandagma_load.txt";
@@ -119,5 +117,5 @@ exit;
   }
   close IN;
   close OUT;
-  
 
+  print "\n\nDone\n\n";
