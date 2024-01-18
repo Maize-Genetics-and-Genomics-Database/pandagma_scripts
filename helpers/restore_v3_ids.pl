@@ -17,37 +17,43 @@ my $usage = <<EOS
       perl [options] restore_v3_ids <xref-file> <file>
       
     options:
-      -d: [OPTIONAL] directory, in which case <file> is the file name pattern
+      -c: [OPTIONAL] column for gene model name in FASTA defline
+      -d: [OPTIONAL] directory, in which case -g gives the file pattern
       -g: [OPTIONAL] glob pattern for files, sans directory
       -o: [OPTIONAL] directory for output files, if operating on a directory
       -p: [OPTIONAL] prefix to add to file names
       -t: table/FASTA/tree/generic [DEFAULT=table]
       
+    <file> is required unless -d and -g
+      
     examples:
       perl restore_v3_ids.pl -t table data/v3_sref.txt 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv
-      restore_v3_ids.pl -d . -g pan.* -o mod -p pan-zea.v1. -t FASTA data/v3_xref.txt
+      perl restore_v3_ids.pl -d . -g pan.* -o mod -p pan-zea.v1. -t FASTA data/v3_xref.txt
     
 EOS
 ;
 
-  my $file_type = 'table';
+  my $defline_col = 1;
   my $dir = '';
+  my $glob = '';
   my $outdir = '';
   my $prefix = '';
-  my $glob = '';
+  my $file_type = 'table';
   my %cmd_opts;
-  getopts("d:g:o:p:t:", \%cmd_opts);
+  getopts("c:d:g:o:p:t:", \%cmd_opts);
+  if (defined($cmd_opts{'c'})) { $defline_col = $cmd_opts{'c'}; } 
   if (defined($cmd_opts{'d'})) { $dir = $cmd_opts{'d'}; } 
   if (defined($cmd_opts{'g'})) { $glob = $cmd_opts{'g'}; } 
   if (defined($cmd_opts{'o'})) { $outdir = $cmd_opts{'o'}; } 
   if (defined($cmd_opts{'p'})) { $prefix = $cmd_opts{'p'}; } 
   if (defined($cmd_opts{'t'})) { $file_type = $cmd_opts{'t'}; }
-#print "file_type: $file_type, dir: $dir, glob: $glob, outdir: $outdir, prefix: $prefix, file_type: $file_type\n\n";
   
   my ($xreffile, $infile) = @ARGV;
   if (!$xreffile || (!$dir && !$infile)) {
     die $usage;
   }
+#print "file_type: $file_type, dir: $dir, glob: $glob, outdir: $outdir,\n";
+#print "prefix: $prefix, file_type: $file_type,\nxreffile: $xreffile,\ninfile: $infile\n\n";
 
   my %xref;
   open XREF, "<$xreffile" or die "\nUnable to open $xreffile: $1\n\n";
@@ -57,8 +63,6 @@ EOS
     $xref{$fields[1]} = $fields[0];
   }
   close XREF;
-#print Dumper(%xref);
-#print "File type: $file_type, directory: $dir, output directory: $outdir, prefix: $prefix\n";
 
   if ($file_type eq 'table') {
     processTable($infile, %xref);
@@ -135,13 +139,13 @@ sub processGenericFile {
         if ($xref{$old_gm} =~ /GRMZM/) {
           $new_id = $xref{$old_gm} . "_T$tr";
 #print "  translate to $new_id\n";
-          $line =~ s/$old_id/$new_id/;
+          $line =~ s/$old_id/$new_id/g;
         }
         else {
           $new_id = $xref{$old_gm};
           $new_id =~ s/FG/FTG/;
 #print "  translate to FGenesH $new_id\n";
-          $line =~ s/$old_id/$new_id/;
+          $line =~ s/$old_id/$new_id/g;
 #print "translated line: $line";
         }
       }
@@ -154,7 +158,7 @@ sub processGenericFile {
       if ($xref{$old_gm}) {
         $new_gm= $xref{$old_gm};
 #print "  translate to $new_gm\n";
-        $line =~ s/$old_gm/$new_gm/;
+        $line =~ s/$old_gm/$new_gm/g;
       }
     }#each gene model match
 
@@ -167,6 +171,8 @@ sub processGenericFile {
 sub processOneFASTA {
   my ($infile, $outfile, %xref) = @_;
   
+  my $re = ($defline_col == 1) ? qr/>(\w+)/ : qr/>.*?\s+(.*)/;
+  
   if ($outfile) {
     print "Write to $outfile\n";
     open OUT, ">$outfile";
@@ -175,23 +181,25 @@ sub processOneFASTA {
   open IN, "<$infile" or die "\nUnable to open $infile: $1\n\n";
   while (<IN>) {
 #print $_;
-    if (/>(\w+)/) {
+    if (m/$re/) {
       $old_id = $1;
       $old_gm = $1;
-      $old_gm=~ s/(_T.*)//;
-#print "gm name: $old_gm\n";
+      $old_gm =~ s/(_T.*)//;
+#print "transcript: $old_id, gm name: $old_gm\n";
       if ($xref{$old_gm}) {
-        if ($xref{$old_gm} =~ /GRMZM/) {
 #print "Translate $old_gm to $xref{$old_gm}$1\n";
-          s/$old_gm/$xref{$old_gm}/;
-        }
-        else {
-#print "Translate $old_gm to FGenesH name $xref{$old_gm}\n";
-          s/$old_id/$xref{$old_gm}/;
+        s/$old_gm/$xref{$old_gm}/;
+        if (!($xref{$old_gm} =~ /GRMZM/)) {
           s/FG/FTG/;
         }
       }
+      
+      if ($defline_col == 2 && $prefix ne '') {
+        # Add prefix to pan-gene id in first column
+        s/>(.*?)(\s+.*)/>$prefix$1$2/;
+      }
     }
+    
     if ($outfile eq '') {
       # Write to standard out
       print;
@@ -286,7 +294,7 @@ sub processTable {
 
 sub processTrees {
   my ($dir, $outdir, $prefix, $glob, %xref) = @_;
-print "glob: $glob\n";
+#print "glob: $glob\n";
 
   opendir(my $dh, $dir) || die "Can't open directory $dir: $!";
   my @files = sort(grep { /pan/ && -f "$dir/$_" } readdir($dh));
