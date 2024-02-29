@@ -53,22 +53,22 @@ which calc_ks_from_dag.pl
 #$HERE/pandagma-pan.sh -c $CONFIG -s mcl
 #$HERE/pandagma-pan.sh -c $CONFIG -s consense
 #$HERE/pandagma-pan.sh -c $CONFIG -s cluster_rest
-$HERE/pandagma-pan.sh -c $CONFIG -s add_extra
-$HERE/pandagma-pan.sh -c $CONFIG -s pick_exemplars
-$HERE/pandagma-pan.sh -c $CONFIG -s tabularize
-$HERE/pandagma-pan.sh -c $CONFIG -s filter_to_pctile
-$HERE/pandagma-pan.sh -c $CONFIG -s order_and_name
-$HERE/pandagma-pan.sh -c $CONFIG -s calc_chr_pairs
-$HERE/pandagma-pan.sh -c $CONFIG -s summarize
+#$HERE/pandagma-pan.sh -c $CONFIG -s add_extra
+#$HERE/pandagma-pan.sh -c $CONFIG -s pick_exemplars
+#$HERE/pandagma-pan.sh -c $CONFIG -s tabularize
+#$HERE/pandagma-pan.sh -c $CONFIG -s filter_to_pctile
+#$HERE/pandagma-pan.sh -c $CONFIG -s order_and_name
+#$HERE/pandagma-pan.sh -c $CONFIG -s calc_chr_pairs
+#$HERE/pandagma-pan.sh -c $CONFIG -s summarize
 
 ##########
 # Optional alignment and tree-construction steps
-# $HERE/pandagma-pan.sh -c $CONFIG -s align_cds
-# $HERE/pandagma-pan.sh -c $CONFIG -s align_protein
-#$HERE/pandagma-pan.sh -c $CONFIG -s model_and_trim
-#$HERE/pandagma-pan.sh -c $CONFIG -s calc_trees
-#$HERE/pandagma-pan.sh -c $CONFIG -s xfr_aligns_trees
-#$HERE/pandagma-pan.sh -c $CONFIG -s summarize
+#$HERE/pandagma-pan.sh -c $CONFIG -s align_cds
+#$HERE/pandagma-pan.sh -c $CONFIG -s align_protein
+$HERE/pandagma-pan.sh -c $CONFIG -s model_and_trim
+$HERE/pandagma-pan.sh -c $CONFIG -s calc_trees
+$HERE/pandagma-pan.sh -c $CONFIG -s xfr_aligns_trees
+$HERE/pandagma-pan.sh -c $CONFIG -s summarize
 
 ##########
 ## Optional work-directory cleanup steps
