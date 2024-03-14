@@ -12,15 +12,17 @@
 
 use strict;
 use Cwd;
+use Getopt::Std;
+
 use Data::Dumper;
 
 my $usage = <<EOS
 
     usage: 
-      perl format_pandagma_table.pl [prefix] [working-directory]
+      perl format_pandagma_table.pl [options] [prefix] [working-directory]
       
     example:
-      perl format_pandagma_table.pl .
+      perl format_loading_table.pl 'pan-zea.v2.' .
     
 EOS
 ;
