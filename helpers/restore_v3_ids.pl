@@ -14,7 +14,7 @@ use Data::Dumper;
 
 my $usage = <<EOS
     usage: 
-      perl [options] restore_v3_ids <xref-file> <file>
+      perl restore_v3_ids [options] <xref-file> <file>
       
     options:
       -c: [OPTIONAL] column for gene model name in FASTA defline
