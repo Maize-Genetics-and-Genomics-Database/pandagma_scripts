@@ -2,6 +2,11 @@
 # 
 # purpose: load bed files into an SQLite database
 # 
+# To run on Ceres:
+#   salloc
+#   ml miniconda
+#   conda activate post-process
+# 
 # history
 #   07/24/24  eskc  created
  
