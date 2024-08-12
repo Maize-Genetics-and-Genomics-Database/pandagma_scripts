@@ -28,6 +28,8 @@ _FASTA files_: the deflines should consist of only the transcript/protein identi
 
 _File names_: Must be prefixed with the gene model prefix, e.g. Zm00001eb.Zm-B73-REFERENCE-NAM-5.0_Zm000001eb.1.cds.fa.
 
+_CDS files_:
+Must contain only the canonical CDSs.
 
 ###Gene families###
 As gene family analyses rely on datasets from multiple groups, the nomenclature varies greatly, making file preparation a challenge. Each dataset will need to be assigned a prefix, following the format of gene model prefixes in maize. To avoid the possibility of naming conflicts, start the numbering at 99999. For example, Ph99999aa is the prefix for Panicum\_hallii\_590, and Ph99998aa for Ph99998aa.Panicum\_hallii\_591.
