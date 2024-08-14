@@ -1,0 +1,439 @@
+
+Jump to:
+  SciNet notes
+  Set up Pandagma
+  Prepare files for Pandagma
+  Run Pandagma
+  Command line tricks with Pandagma output files
+  Checks
+  Debugging
+  First run pan-Zea calculation
+  First run grass gene families calculation
+  First run dataset fixes and mods
+
+
+*****************************************************************************************
+SciNet notes
+*****************************************************************************************
+
+log in to Ceres
+  https://scinet.usda.gov/guides/access/login
+  ssh -o TCPKeepAlive=yes -o ServerAliveInterval=20 -o ServerAliveCountMax=30 USER.NAME@ceres.scinet.usda.gov
+  or 
+  ssh ceres-login with suggested changes to ~/.ssh/config file
+  login pops up in browser
+
+Copy to.=/from Ceres
+  scp [files] ethy.cannon@ceres.scinet.usda.gov:[path]
+
+Go to project directory
+  /project/maizegdb/ethy
+
+Also remember:  /90daydata/maizegdb  (more space)
+
+Available disk space: $ my_quotas
+
+Grab some cores before working:
+  $ scalloc -c [num cores]
+
+Some conda commands
+  $ salloc
+  $ ml miniconda
+  $ conda list -n pandagma
+  $ conda install -c bioconda -n pandagma perl-bio-tools-run-alignment-clustalw
+  $ source activate pandagma
+  $ conda deactivate # or just exit salloc
+
+project directory (MaizeGDB owns a node)
+  /project/maizegdb
+  
+Slurm commands
+  $ sbatch [sbatch file]
+  $ sq     # to check if job is running
+  Output goes to slurm* and stderr*
+  $ scancel [job id]
+Am I in salloc?
+  $ echo $SLURM_JOB_ID   # returns nothing if not in salloc
+
+Forum: https://forum.scinet.usda.gov (use lincpass)
+
+
+
+*****************************************************************************************
+Set up Pandagma
+*****************************************************************************************
+
+Clone pandagma into project directory
+  $ git clone https://github.com/legumeinfo/pandagma.git
+  $ cd pandagma
+  $ mkdir data_orig  # holds original cds, protein, and gff files
+  $ mkdir data  # processed files (script to process files no longer part of pandagma)
+
+Modify/create a config file in pandagma/config/
+  Holds paramters and names of files for main, extra-constrained (by matching chr), 
+  and extra-free. Chromosome associations can be listed here, or in the file 
+  data/expected_chr_matches.tsv.
+  
+  Important: The bed and cds fasta files must be listed in the same order.
+
+Create an sbatch file. Use the conda example.
+
+$ sbatch [sbatch file]
+
+
+*****************************************************************************************
+Prepare files for Pandagma
+*****************************************************************************************
+
+Limit CDS files to canonical transcripts
+Protein names need to match transcript names (i.e., _T***)
+
+
+*****************************************************************************************
+Run Pandagma
+*****************************************************************************************
+
+Often wise to run ingest by itself, only once.
+
+
+***********************************************
+Command line tricks with Pandagma output files
+***********************************************
+  # count files of a type
+  ls data/*cds.fa* | wc
+
+  # loop, taking advantage of cores
+  for file in *gz ; do gunzip $file &[CR!]  # & needs to be at the end of the line
+  done
+
+  # longest element in GFF
+  cat Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.gff3 | 
+  awk '{if(!($1~/#/)&&!($3~/chromosome/)){print ($5-$4), $3, $4, $5, $9}}' |
+  sort -r -k1,1n | head
+
+  # longest element in BED
+  zcat Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.gff3.bed |
+  awk '{print ($3-$2), $4}' | sort -r -k1,1n > t
+
+vim tips
+  copy batch of lines:
+  ma
+  d'a
+  p
+
+  a single line:
+  yy
+  p
+
+View histograms
+cat STRING_OF_NUMBERS | histogram -n -s1 | histplot.pl -divisor 10
+
+To run perl scripts that require BioPerl:
+  inside the pandagma dir:
+    salloc
+    ml miniconda
+    conda env create
+    export PANDAGMA_ROOT=//project/maizegdb/ethy/grass-fam/pandagma
+    export PATH=$PANDAGMA_ROOT/bin:$PATH
+    source activate pandagma
+
+
+*****************************************************************************************
+Checks
+*****************************************************************************************
+
+Sequence ids for proteins must match ids in CDS files
+
+Even if empty, these must exist in config file:
+  annotation_files_extra_constr=(
+  )
+  cds_files_extra_constr=(
+  )
+  annotation_files_extra_free=(
+  )
+  cds_files_extra_free=(
+  )
+
+
+
+*****************************************************************************************
+Debugging
+*****************************************************************************************
+
+Run steps individually
+  Comment out all but one in sbatch file.
+
+Run ks_calc one at a time:
+  cat $DAGFILE | calc_ks_from_dag.pl -fasta_db 02_tmp_fasta.db \
+      -match_table 03_mmseqs/$base.db  -align_method precalc \
+      -report_out 05_kaksout/$base.rptout &
+  ---->
+      -report_out 05_kaksout/$base.rptout &> test.out  # stdout and stderr to test.out
+
+Prevent removal of intermediate files:
+  pandagma-pan.sh -r -c $CONFIG  # Doesn't work???
+
+Work files:
+  01_posn_hsh/, 01_combined_posn.hsh - gene model position hashes
+  02_all*.fna                        - all CDS fasta, conveniently located
+  03_mmseqs                          - mmseq output for each combination of annotations
+  04_dag                             - dagchainer output from 03_mmseqs
+  05_filtered_pairs.tsv              - dagchainer output filtered for matching chromosomes
+
+
+*****************************************************************************************
+First run pan-Zea calculation
+*****************************************************************************************
+
+Data selection:
+  main: B73, NAMs, Chinese FIL, Pan-And Zea
+  extra: everything else
+  
+get data
+  get_data/get_pan_zea.sh
+  
+  NOTE: block comment
+  : << "END"
+  ...
+  END
+
+  Deal with B73 v3 by hand
+    --> B73v3 (for safe keeping)
+    ARSBox https://iastate.app.box.com/folder/165911971789 (private > MAIZE_GENOMES > B73RefGen_v3)
+    Use Zea_mays.AGPv3.22.pandagma.better.gff3.gz
+  
+    To repeat process:
+      Remove repeats and organelle features
+        $ awk '{if($3!~/repeat_region/&&$1!~/chrPt/&&$1!~/chrMt/){print}}' Zea_mays.AGPv3.22.gff3 > Zea_mays.AGPv3.22.no_repeats.gff3
+      Then edit to remove 'gene:', "transcript:', et cetera
+      Convert 'transcript' feature type to 'mRNA'
+      Add chromosome records from cvit file
+      If necessary,
+        get list of gene model names:
+           $ perl -nle '/ID=(.*?)_{0,1};/;print "$1"' Zea_mays.AGPv3.22.no_repeats.mod.gff3 \
+             | perl -nle 'if(!/.*_T\d+/ && !/.*_P\d+/ && !/.*?FGP/ && !/.*?FGT/){print}' > v3_gene_models.txt
+        then make an xref file
+      Translate:
+        $ perl scripts/ReassignIDs.pl v3_xref.txt Zea_mays.AGPv3.22.no_repeats.gff3 \
+             v3_xref.txt > Zea_mays.AGPv3.22.pandagma.gff3
+             
+      Remove organelle gms from cds
+        $ scripts/fasta_to_table.awk Zea_mays.AGPv3.22.cdna.all.pandagma.fa | sort > t
+        delete up to Zm00001ca000175_T01 GRMZM2G040843_T01
+        $ cat t | perl -pe 's/(^.*?)\t/>$1\n/' > t2
+        $ mv t2 Zea_mays.AGPv3.22.cdna.all.pandagma.fa
+      
+      Make canonical cds file
+        $ cat Zm-B73-REFERENCE-GRAMENE-3.0_Zm00001c.1.cds.fa | ../bin/fasta_to_table.awk |
+          perl -pe 's/_T(\d+) ?/\tT$1\t/' |
+          awk -v FS="\t" -v OFS="\t" '$0!~/provisional/ {print $1, length($4), $2, $3, $4}' |
+          sort -k1,1 -k2nr,2nr |
+          ../bin/top_line.awk | awk -v FS="\t" '{print ">" $1 "_" $3 " " $4; print $5}' |
+          cat > Zm-B73-REFERENCE-GRAMENE-3.0_Zm00001c.1.canonical.cds.fa
+        $ gzip Zm-B73-REFERENCE-GRAMENE-3.0_Zm00001c.1.canonical.cds.fa
+      
+      Make bed file
+        $ zcat Zm-B73-REFERENCE-GRAMENE-3.0_Zm00001c.1.gff3.gz | ../bin/gff_to_bed6_mRNA.awk |
+          perl -pe '$prefix="Zm00001c"; s/^(\D+)/$prefix.$1/; s/transcript://' |
+          cat > Zm-B73-REFERENCE-GRAMENE-3.0_Zm00001c.1.gff3.bed
+        $ gzip Zm-B73-REFERENCE-GRAMENE-3.0_Zm00001c.1.gff3.bed
+
+    Clean up B73 v4
+      Remove organelle gene models
+        $ cat Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.protein.fa | ../bin/fasta_to_table.awk | 
+          grep -v "^GRMZM5G" | perl -pe 's/^([^\t]+)\t/>$1\n/' > tmp.Zm00001d.2.protein.fa
+        $ mv tmp.Zm00001d.2.protein.fa Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.protein.fa
+        $ zcat Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.canonical.cds.fa.gz | ../bin/fasta_to_table.awk | 
+        $ grep -v "^GRMZM5G" | perl -pe 's/^([^\t]+)\t/>$1\n/' > Zm00001d.2.canonical.cds.fa
+        $ rm Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.canonical.cds.fa.gz
+        $ mv Zm00001d.2.canonical.cds.fa Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.canonical.cds.fa
+        $ gzip Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.canonical.cds.fa
+      Count result(?)
+        $ grep -c '>' Zm-B73-REFERENCE-GRAMENE-4.0_Zm00001d.2.protein.fa tmp.Zm00001d.2.protein.fa
+
+Modify config/[config_file]
+  To guarantee order:
+  $ cat config/pan_zea.conf  | awk 'NR>=22 && NR<=47' | sort > lis.cds_main
+  $ cat config/pan_zea.conf  | awk 'NR>=51 && NR<=76' | sort > lis.annot_main
+  Copy back into config file
+  Visual check:$  paste lis.cds.extra lis.annot.extra
+
+Choose step(s) to run in sbatch file
+
+Run it:
+  $ exit    # If in salloc
+  $ sbatch sbatch_pan_zea.sh
+  $ sq     # to check if job is running
+  Check stderr file
+  $ scancel [job id]
+
+Alignments
+  in dagchainer src dir:
+  $ Java_XY_plotter/run_XYplot.pl [dag file]   # reallly, REALLY slow; can't load a full file
+
+
+*****************************************************************************************
+First run grass gene families calculation
+*****************************************************************************************
+
+File prep:
+  - prepare canonical cds and protein files
+  - prefix file names with gene model prefix
+  - the gene model prefix needs to be separated from the rest of the name with a .
+     e.g. zm00001eb.000010
+  - all files need to be gzipped
+  
+Data selection:
+  Av-Kellogg1287_8-REFERENCE-PanAnd-1.0	Anatherum virginicum
+  Brachypodium_distachyon-3.0  (5 chrs)
+  Hordeum_vulgare_Morex-3.0 (7 chrs)
+  Oryza_sativa_IRGSP-1.0 (12 chrs)
+  Panicum_hallii_591-2.2
+  Setaria_italica-2.0 (9 chrs)
+    NOTE: italic uses roman numerals to identify chromosomes!
+  Sorghum bicolor (10 chrs)
+  Zea mays B73
+  
+These were problematic; try later:
+  Asativa_sang.v1.1 (needs to be modified w/ fix_grasses.pl)
+  Eragrostis tef (tetraploid: 10X2 chrs; get pub)
+  Panicum_hallii_590-3.2
+  Saccharum_spontaneum_Sspon (wild relative of sugarcane; octopolid haploid; 8*4 chrs)
+  Setaria_viridis-2.0
+  Td-FL_9056069_6-DRAFT-PanAnd-1.0	Tripsacum dactyloides (FL, south;)
+  Td-KS_B6_1-DRAFT-PanAnd-1.0	Tripsacum dactyloides (KS, north)
+  Td-McKain334_5-DRAFT-PanAnd-1.0	Tripsacum dactyloides 
+  Triticum_aestivum_IWGSC (wheat)
+  Zea mays pan-genes (in place of B73)
+
+Can't get this one:
+  Panicum hallii (PHallii_v3.1; drought tolerant C4; 9 chrs; https://doi.org/10.1038/s41467-018-07669-x)
+  Panicum hallii HAL2: FIL2 (PhalliiHAL_v2.1; 9 chrs)
+     --> no annotation at ensembl plants
+     Archived at JGI, waiting for data (12/23)
+
+PanAnd round 2:
+  Ac-Pasquet1232-DRAFT-PanAnd-1.0	Andropogon chinensis
+  Ag-CAM1351-DRAFT-PanAnd-1.0	Andropogon gerardii
+  Ab-Traiperm_572-DRAFT-PanAnd-1.0	Andropogon burmanicus
+  Bl-K1279B-DRAFT-PanAnd-1.0	Bothriochloa laguroides
+  Cc-PI314907-DRAFT-PanAnd-1.0	Cymbopogon citratus
+  Cr-AUB069-DRAFT-PanAnd-1.0	Cymbopogon refractus
+  Cs-KelloggPI219580-DRAFT-PanAnd-1.0	Chrysopogon serrulatus
+  Et-Layton_Zhong168-DRAFT-PanAnd-1.0	Elionorus tripsacoides
+  Hc-AUB53_1-DRAFT-PanAnd-1.0	Heteropogon contortus
+  Hp-KelloggPI404118-DRAFT-PanAnd-1.0	Hemarthria compressa
+  Ir-Pasquet1136-DRAFT-PanAnd-1.0	Ischaemum rugosum
+  Pi-Clark-DRAFT-PanAnd-1.0	Pogonatherum paniceum
+  Pp-Kellogg1297-DRAFT-PanAnd-1.0	Poa pratensis ssp. angustifolia
+  Rr-Malcomber3106-DRAFT-PanAnd-1.0	Rhytachne rottboelloides
+  Rt-Layton_Zhong169-DRAFT-PanAnd-1.0	Rottboellia tuberculosa (also known as Coelorachis tuberculosa and Mnesithea tuberculosa)
+  Sm-PI203595-DRAFT-PanAnd-1.0	Schizachyrium microstachyum
+  Sn-CAM1369-DRAFT-PanAnd-1.0	Sorghastrum nutans
+  Ss-CAM1384-DRAFT-PanAnd-1.0	Schizachyrium scoparium
+  Te-Pasquet1246-DRAFT-PanAnd-1.0	Thelopogon elegans
+  Tt-AUB21_1-DRAFT-PanAnd-1.0	Themeda triandra
+  Tz-DC_05_58_3A-DRAFT-PanAnd-1.0	Tripsacum zopolitense
+  Ud-Pasquet1171-DRAFT-PanAnd-1.0	Urelytrum digitatum
+  Vc-Pasquet1098-DRAFT-PanAnd-1.0	Vossia cuspidata
+
+
+Data cleaning:
+  fix_grasses.pl
+
+
+Check histograms in work_pandagma/stats/ before running steps past ks_calc
+
+
+Transcript unrelated to gene model:
+for file in *gff3; do echo $file; cat $file | grep -v "#" | head -100 | ./rename_gff_IDs.pl; echo; done
+
+cat Br*gff3 | grep -v "#" | head | perl -pe 's/=\w+:/=/g' | ./rename_gff_IDs.pl
+
+cat Br*gff3 | grep -v "#" | awk '$3~/gene|mRNA/' | head
+cat Br*gff3 | grep -v "#" | awk '$3~/gene|mRNA/' | head | perl -pe 's/=\w+:/=/g' | ./add_IDs_to_gff_features.pl
+
+# This one!
+cat Br*gff3 | grep -v "#" | awk '$3~/mRNA/ {print $9}' | perl -pe 's/=\w+:/=/g' | 
+  perl -pe 's/ID=(\w+);Parent=(\w+);.+/$1\t$2/' |
+  awk -v OFS="\t" '$2==prev {print $1, $2 "." ct; prev=$2; ct++} 
+                   $2!=prev {ct=1; print $1, $2 "." ct; prev=$2}'
+
+Check distributions:
+cat 12_syn_pan_aug_pre.clust.tsv | awk '{print NF-1}' | ../bin/histogram.pl -z -n -s1 | ../bin/histplot.pl -d 50 | head -50
+cat stats.txt | ../bin/pan_histplot.pl -d 50 -m 25
+
+
+
+*****************************************************************************************
+First run dataset fixes and mods
+*****************************************************************************************
+
+Remove low-confidence gene models (example: Oat)
+  # get_HC_genes.pl in pandagma_scripts repository
+  $ perl get_HC_genes.pl Asativa_sang.v1.1.gff3 > Asativa_sang.v1.1.HC.gff   
+  >> then the transcript names
+  $ cat Asativa_sang.v1.1.HC.gff | perl -nle 'if(/ID=(.*?\.\d+);/){print $1}' > Asativa_sang.v1.1.HC.transcripts
+  >> new CDS file: (run this in pandagma folder, after activating pandagma)
+  $ bin/get_fasta_subset.pl -input_fas=../../grasses/oat/Asativa_sang.v1.1.cds.fa \
+     -output_fas=../../grasses/oat/Asativa_sang.v1.1.cds.HC.fa \
+     -list_IDs=../../grasses/oat/Asativa_sang.v1.1.HC.transcripts
+  >> new protein file:
+  $ bin/get_fasta_subset.pl -input_fas=../../grasses/oat/Asativa_sang.v1.1.protein.fa \
+     -output_fas=../../grasses/oat/Asativa_sang.v1.1.protein.HC.fa \
+     -list_IDs=../../grasses/oat/Asativa_sang.v1.1.HC.transcripts
+
+
+Make canonical CDS and protein files (example: Oat)
+  $ file='Asativa_sang.v1.1.cds.HC.fa'
+    base='Asativa_sang.v1.1'
+    echo "Write" $file "to" $base".canonical.cds.HC.fa"
+    cat $file | ../../grass-fam/pandagma/bin/fasta_to_table.awk |
+      awk '{id=gensub(/(.*?)[.][0-9]+$/,"\\1","g",$1);print id,length($2),$1,$2}' |
+      sort -k1,1 -k2,2nr |
+      awk '{id=gensub(/(.*?)[.][0-9]+$/,"\\1","g",$1);
+            if(id==prev&&count<MAX){print $3,$4;count++};
+            if(id!=prev){print $3,$4;count=1;prev=id}}' | 
+      ../../grass-fam/pandagma/bin/top_line.awk | 
+      awk '{print ">" $1; print $2}' |
+      cat > $base.canonical.cds.HC.fa
+
+
+Make bed file from GF F(example: Oat)
+  $ file='Asativa_sang.v1.1.HC.gff'
+    base='Asativa_sang.v1.1.HC'
+    echo "Convert "$file" to "$base".bed"
+    cat $file | ../../grass-fam/pandagma/bin/gff_to_bed7_mRNA.awk | 
+      cat > $base.bed
+
+
+
+*****************************************************************************************
+Post-processing
+*****************************************************************************************
+
+$ scalloc
+$ ml miniconda
+
+First time:
+$ conda create --name post-process
+$ conda activate post-process
+$ ml sqlite3
+$ conda install bioconda::perl-dbd-sqlite
+
+Subsequently:
+$ ml sqlite3
+$ conda activate post-process
+
+
+
+
+
+
+
+
+
+
+
+
+
