@@ -13,7 +13,7 @@
 
 my $usage = <<EOS
     usage: 
-      perl [options] ReassignB73v3IDs <xref-file> <gff-file>
+      perl ReassignB73v3IDs.pl [options] <xref-file> <gff-file>
     options
       -t file type (gff/generic) [default: gff]
     example:
@@ -22,32 +22,36 @@ my $usage = <<EOS
 EOS
 ;
 
-my $file_type = 'gff';
-my %cmd_opts;
-getopts("t:", \%cmd_opts);
-if (defined($cmd_opts{'t'})) { $file_type = $cmd_opts{'t'}; } 
+  my $file_type = 'gff';
+  my %cmd_opts;
+  getopts("t:", \%cmd_opts);
+  if (defined($cmd_opts{'t'})) { $file_type = $cmd_opts{'t'}; } 
 
-my ($xreffile, $infile) = @ARGV;
+  my ($xreffile, $infile) = @ARGV;
 
-if (!$infile) {
-  die $usage;
-}
+  if (!$infile) {
+    die $usage;
+  }
 
-my %xref;
-open XREF, "<$xreffile" or die "\nUnable to open $xreffile: $!\n\n";
-while (<XREF>) {
-  chomp;
-  my @fields = split /\t/;
+  my %xref;
+  open XREF, "<$xreffile" or die "\nUnable to open $xreffile: $!\n\n";
+  while (<XREF>) {
+    chomp;
+    my @fields = split /\t/;
 #print Dumper(@fields);
-  $xref{$fields[0]} = $fields[1];
-}
-close XREF;
-#print 'Translate GRMZM2G040843 to ' . $xref{'GRMZM2G040843'} . "\n";
+    $xref{$fields[0]} = $fields[1];
+  }
+  close XREF;
+#print Dumper(%xref);
+
+#print "Got " . scalar(keys(%xref)) . " translations.\n\n";
+#print 'Translate GRMZM2G356191 to ' . $xref{'GRMZM2G356191'} . "\n";
 
 # Used all over
 my ($line, $orig_id, $new_id);
 
 # Generic file format
+my $count =  0;
 if ($file_type eq 'generic') {
   open IN, "<$infile" or die "\nUnable to open $infile: $!\n\n";
   while (<IN>) {
@@ -55,15 +59,16 @@ if ($file_type eq 'generic') {
     $line = $_;
     next if ($line eq '' || $line =~ m/^#/);
 #print "\nline: $line\n";
-    if ($line =~ /(GRMZM\w+?)_T/) {
+    if ($line =~ /.*(GRMZM\w+?)_T/) {
       $orig_id = $1;
+#print "Original id = [$orig_id]\n";
       if ($new_id=translate_id($orig_id)) {
 #print "Convert [$orig_id] to [$new_id]\n";
         $line =~ s/$orig_id/$new_id/g;
         print "$line\n";
       }
-    }
-    elsif ($line =~ /([AE].+?_FG)T(\d+)/) {
+    }#GRMZM identifier
+    elsif ($line =~ /.*([AE].+?_FG)T(\d+)/) {
       $orig_id = "$1$2";
 #print "FgenesH gene model, check [$orig_id]\n";
       if ($new_id=translate_id($orig_id)) {
@@ -75,12 +80,12 @@ if ($file_type eq 'generic') {
         $line =~ s/$orig_id/$new_id/;
         print "$line\n";
       }
-    }
+    }#FgenesH identifier
     else {
-      print "Don't know what to do with [$line]\n\n";
-      exit;
+      print "$line\n";;
     }
-    
+    $count++;
+#last if ($count > 200);
   }#each line
   close IN;
 }
