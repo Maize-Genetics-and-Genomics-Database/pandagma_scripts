@@ -19,7 +19,7 @@ use Data::Dumper;
 my $usage = <<EOS
 
     usage: 
-      perl format_pandagma_table.pl [options] [prefix] [working-directory]
+      perl format_pandagma_table.pl [prefix] [working-directory]
       
     example:
       perl format_loading_table.pl 'pan-zea.v2.' .
@@ -83,13 +83,16 @@ EOS
   # Build loading table from 18_syn_pan_aug_extra.hsh.tsv (panID, trans)
   # panID	trans	transChr transStart	transEnd transStrand panChr panStart panEnd	panStrand	exemplar
   print "\nWRITE TABLE $workdir/pandagma_load.txt\n";
-  $filename = "$workdir/18_syn_pan_aug_extra.hsh.tsv\n";
-  open IN, "<$filename" or die "\nUnable to open $filename: $!\n\n";
   open OUT, ">$workdir/pandagma_load.txt";
   print OUT "panID\ttrans\ttransChr\ttransStart\ttransEnd\ttransStrand\tpanChr\tpanStart\tpanEnd\tpanStrand\texemplar\n";
+
+  $filename = "$workdir/18_syn_pan_aug_extra.hsh.tsv\n";
+  open IN, "<$filename" or die "\nUnable to open $filename: $!\n\n";
+
   $count = 0;
   while (<IN>) {
     chomp;chomp;
+print "_\n";
     @fields = split /\t/;
     my $pan_gene = $prefix . $fields[0];
     $pan_gene =~ s/\s//g;
