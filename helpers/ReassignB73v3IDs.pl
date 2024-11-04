@@ -1,9 +1,12 @@
 # file: ReassignB73v3IDs.pl
 #
-# purpose: reassign ids in a GFF file. Keep original id
+# purpose: reassign ids in a GFF file. Keep original id if possible.
+#
+# writes to stout.
 #
 # History:
 #  08/02/23  eksc  created
+#  10/30/24  eksc  added fasta option
 
   use strict;
   use Getopt::Std;
@@ -15,9 +18,9 @@ my $usage = <<EOS
     usage: 
       perl ReassignB73v3IDs.pl [options] <xref-file> <gff-file>
     options
-      -t file type (gff/generic) [default: gff]
+      -t file type (gff/generic/fasta) [default: gff]
     example:
-      perl ReassignB73v3IDs.pl v3_sref.txt Zea_mays.AGPv3.22.no_repeats.mod.gff3
+      perl ReassignB73v3IDs.pl -t gff v3_sref.txt Zea_mays.AGPv3.22.no_repeats.mod.gff3 > out
     
 EOS
 ;
@@ -52,7 +55,7 @@ my ($line, $orig_id, $new_id);
 
 # Generic file format
 my $count =  0;
-if ($file_type eq 'generic') {
+if ($file_type eq 'generic' or $file_type eq 'fasta') {
   open IN, "<$infile" or die "\nUnable to open $infile: $!\n\n";
   while (<IN>) {
     chomp;
@@ -65,6 +68,9 @@ if ($file_type eq 'generic') {
       if ($new_id=translate_id($orig_id)) {
 #print "Convert [$orig_id] to [$new_id]\n";
         $line =~ s/$orig_id/$new_id/g;
+        if ($file_type eq 'fasta') {
+          $line .= " $orig_id";
+        }
         print "$line\n";
       }
     }#GRMZM identifier
@@ -78,6 +84,9 @@ if ($file_type eq 'generic') {
         }
 #print "Convert [$orig_id] to [$new_id]\n";
         $line =~ s/$orig_id/$new_id/;
+        if ($file_type eq 'fasta') {
+          $line .= " $orig_id";
+        }
         print "$line\n";
       }
     }#FgenesH identifier
