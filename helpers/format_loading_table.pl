@@ -22,13 +22,13 @@ my $usage = <<EOS
       perl format_pandagma_table.pl [prefix] [working-directory]
       
     example:
-      perl format_loading_table.pl 'pan-zea.v2.' .
+      perl format_loading_table.pl 'pan-zea.v2.' data/ .
     
 EOS
 ;
 
   
-  my ($prefix, $workdir) = @ARGV;
+  my ($prefix, $bedfiledir, $workdir) = @ARGV;
   if (!$workdir) {
     die $usage;
   }
@@ -38,11 +38,16 @@ EOS
 
   # Get position for each gene model
   print "\nGET POSITIONS\n";
-  my @bedfiles = glob("$workdir/bed/*.bed");
+  my @bedfiles = glob("$bedfiledir/*.bed*");
   my %positions;
   for $filename (@bedfiles) {
     print "$filename\n";
-    open IN, "<$filename" or die "\nUnable to open $filename: $!\n\n";
+    if ($filename =~ /.gz/) {
+      open IN, "gzip -dc $filename |";
+    }
+    else {
+      open IN, "<$filename" or die "\nUnable to open $filename: $!\n\n";
+    }
     $count = 1;
     while (<IN>) {
       chomp;chomp;
@@ -92,8 +97,9 @@ EOS
   $count = 0;
   while (<IN>) {
     chomp;chomp;
-print "_\n";
+#print "\n$_\n";
     @fields = split /\t/;
+#print Dumper(@fields);
     my $pan_gene = $prefix . $fields[0];
     $pan_gene =~ s/\s//g;
     my $trans = $fields[1];
@@ -101,6 +107,7 @@ print "_\n";
     my $exemplar = $pan_gene_exemplars{$pan_gene};
     $exemplar =~ s/\s//g;
     my $pan_chr = $positions{$exemplar}{'chromosome'};
+#print "Transcript: $trans, exemplar: $exemplar, pan-chr: $pan_chr\n";
     $pan_chr =~ s/.*(chr\d+)/$1/;
 #print "\n\n$trans position:\n" . Dumper($positions{$trans}) . "\n";
     my @rec = (
@@ -123,4 +130,4 @@ print "_\n";
   close IN;
   close OUT;
 
-  print "\n\nDone\n\n";
+  print "\n\DONE\n\n";
