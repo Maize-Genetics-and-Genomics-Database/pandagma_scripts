@@ -10,6 +10,7 @@ Jump to:
   First run pan-Zea calculation
   First run grass gene families calculation
   First run dataset fixes and mods
+  Classes of errors
 
 
 *****************************************************************************************
@@ -21,9 +22,16 @@ log in to Ceres
   ssh -o TCPKeepAlive=yes -o ServerAliveInterval=20 -o ServerAliveCountMax=30 USER.NAME@ceres.scinet.usda.gov
   or 
   ssh ceres-login with suggested changes to ~/.ssh/config file
-  login pops up in browser
+  if needed, set up step
+    $ brew install step
+    then
+    $ step ca bootstrap --ca-url https://step-ca.scinet.usda.gov --fingerprint adb703fd18f176937743b20228d52af7a705d63a0471cd67428660be5fd006bf 
+    $ step ssh config --set Provisioner=keycloak --set User=user.name
+  log in
+    $ ssh ceres-login
+    login form pops up in browser
 
-Copy to.=/from Ceres
+Copy to/from Ceres
   scp [files] ethy.cannon@ceres.scinet.usda.gov:[path]
 
 Go to project directory
@@ -38,6 +46,8 @@ Grab some cores before working:
 
 Some conda commands
   $ salloc
+  OR
+  $ salloc -N 1 -n 36 -t 2:00:00 -p short
   $ ml miniconda
   $ conda list -n pandagma
   $ conda install -c bioconda -n pandagma perl-bio-tools-run-alignment-clustalw
@@ -88,6 +98,26 @@ Prepare files for Pandagma
 Limit CDS files to canonical transcripts
 Protein names need to match transcript names (i.e., _T***)
 
+Preprocessing:
+  1. Review overlapping gene models 
+      See pandagma_scripts/helers/find_overlapping_gene_models.pl
+      CREATE TABLE chado.overlapping_gene_model (
+         overlapping_gene_model_id BIGSERIAL,
+         gene_model TEXT,
+         overlapped_gene_models TEXT
+      );
+      On curation server:
+      # \copy chado.overlapping_gene_model (gene_model, overlapped_gene_models) from '/home/mgdbadmin/support_scripts/GeneModels/data/overlaps.txt' with delimiter E'\t'
+  2. Review really long gene models
+     SELECT * FROM (
+       SELECT gene_model, length,
+              ARRAY_LENGTH(STRING_TO_ARRAY(overlapped_gene_models, ','), 1) AS count
+       FROM chado.overlapping_gene_model
+       WHERE gene_model LIKE 'Zm00001%' OR gene_model LIKE 'GRMZM%' 
+             OR gene_model LIKE 'A%' OR gene_model LIKE 'E%'
+     ) s WHERE count > 1
+     ORDER by length DESC;
+  
 
 *****************************************************************************************
 Run Pandagma
@@ -413,7 +443,7 @@ Post-processing
 *****************************************************************************************
 
 $ scalloc
-$ ml miniconda
+$ ml miniconda                                                                 m                                                                                                                                                                                                                                                                                                                                                                                 
 
 First time:
 $ conda create --name post-process
@@ -428,6 +458,45 @@ $ conda activate post-process
 
 
 
+*****************************************************************************************
+Classes of errors (8/29/24)
+*****************************************************************************************
+
+- There are some questionable groupings of gene models via method 1. How reliable was 
+  the synteny analysis used when determining that two gene models are the same? Even 
+  the connections across annotation version that were done by hand can be incorrect. 
+  People do make mistakes, and when making decisions based on the outcome of a synteny 
+  study, mistakes can be compounded.
+
+- I've found one case of a gene model hand-assigned to a locus that appears to be from a 
+  pre-v3 annoation as it doesn't appear anywhere in the database or browsers (e.g.
+   GRMZM2G476954 for aaap26 is from v2). Fortunately, there appear to be only 15 or so 
+   such cases, though the ease with which I found one suggests there are many more that
+    my db query didn't find.
+
+- There are many cases where a merged or split gene model made it impossible for pandagma 
+  to build a reasonable pan-gene. I've found instances of this in all three annotation 
+  versions. Some of these also lead to questionable hand-curated groupings, though often 
+  documented (e.g. "gene models X and Y are split"), but not in a way that can be used 
+  in a bulk analysis. In cases where two adjacent, split gene models were linked to a 
+  locus, there is no way that pandagma will do so as well.
+
+- Most of the literature-supported locus-gene model associations appear to be in v3, but 
+  the v3 annotation and especially the assembly have significant problems. Given the 
+  messiness of the BAC-by-BAC assembly, I'm unsure of the accuracy of aligning the gene 
+  models to v5. The new synteny tracks produced by Crossmap and Liftoff point out the 
+  challenge, as they often don't agree with each other.
+
+- Some loci are connected to v3 gene models identified as transposons. These are 
+  presented differently in the GFF records and are being missed by the pan-gene analysis. 
+  Fixing this is non-trivial. 
+
+- Some regions are simply poorly annotated. Synteny analysis may put gene models in the 
+  same place on v5, but they may not show much similarity in sequence or structure.
+
+- There are cases of the seemingly wrong transcript selected as the canonical transcript, 
+  one that doesn't match either of the other two annotations nor the Helixer prediction 
+  (which I know, combines the transcripts).
 
 
 
