@@ -19,7 +19,7 @@ use Data::Dumper;
 my $usage = <<EOS
 
     usage: 
-      perl format_pandagma_table.pl [prefix] [working-directory]
+      perl format_pandagma_table.pl [prefix] [bedfile-directory] [working-directory]
       
     example:
       perl format_loading_table.pl 'pan-zea.v2.' data/ .

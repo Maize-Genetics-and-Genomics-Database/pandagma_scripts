@@ -225,17 +225,26 @@ Calculate trees
 
 Trees for pan-genes need to be calculated by hand; the built-in process doesn't work.
 
-salloc -N 1 -n 36 -t 2:00:00 -p short
+output=$(echo "$input" | sed 's/[aeiou]/#/g')
+
+salloc -N 1 -n 36 -t 4:00:00 -p short
 ml miniconda
 source activate pandagma
 . config/pan_zea.conf
-cd work_pandagma
-PATH=/project/maizegdb/ethy/pan-zea/pandagma/bin:$PATH
+#export PATH=/project/maizegdb/ethy/pan-zea/pandagma/bin:$PATH
+
+[path]/run_pan_tree.sh
+
+Script contents:
 export OMP_NUM_THREADS=1
 export NPROC=$( ( command -v nproc > /dev/null && nproc ) || getconf _NPROCESSORS_ONLN)
 export dir_prefix=2
 for filepath in "${dir_prefix}3_hmmalign_trim2"/*; do
   file=$(basename "$filepath")
+  num=$(echo "$file" | sed 's/pan//g')
+  if [[ $num < $start ]]; then
+    echo "Skipping $file"
+  fi
   echo "  Calculating tree for $file"
   echo "fasttree -quiet $filepath > ${dir_prefix}4_trees/$file"
   fasttree -quiet "$filepath" > "${dir_prefix}4_trees/$file" &
