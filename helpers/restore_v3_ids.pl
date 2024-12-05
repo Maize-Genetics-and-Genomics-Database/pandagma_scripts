@@ -52,8 +52,8 @@ EOS
   if (!$xreffile || (!$dir && !$infile)) {
     die $usage;
   }
-#print "file_type: $file_type, dir: $dir, glob: $glob, outdir: $outdir,\n";
-#print "prefix: $prefix, file_type: $file_type,\nxreffile: $xreffile,\ninfile: $infile\n\n";
+print "file_type: [$file_type], dir: [$dir], glob: [$glob], outdir: [$outdir]\,\n";
+print "prefix: [$prefix], file_type: [$file_type],\nxreffile: [$xreffile],\ninfile: [$infile]\n\n";
 
   my %xref;
   open XREF, "<$xreffile" or die "\nUnable to open $xreffile: $1\n\n";
@@ -68,10 +68,12 @@ EOS
     processTable($infile, %xref);
   }
   elsif ($file_type eq 'FASTA') {
-    if ($infile && $dir eq '') {
+    if ($infile && $infile ne '' && $dir eq '') {
+print "Process one file.\n";
       processOneFASTA($infile, '', %xref);
     }
     else {
+print "Process all files in directory [$dir] that match [$glob].\n";
       processFASTA($dir, $outdir, $prefix, $glob, %xref);
     }
   }
@@ -107,6 +109,7 @@ sub processFASTA {
   opendir(my $dh, $dir) || die "Can't open directory $dir: $!";
   my @files = sort(grep { /$glob/ && -f "$dir/$_" } readdir($dh));
   closedir $dh;
+print "Found " . (scalar @files) . " in $dir matching $glob.\n";
   
 #print "All files:\n" . Dumper(@files);
   my $count = 1;
@@ -115,7 +118,7 @@ sub processFASTA {
     my $outfile = "$outdir/$prefix$file";
     processOneFASTA("$dir/$file", $outfile, %xref);
     $count++;
-#last if ($count > 0);
+last if ($count > 0);
   }
 }#processFASTA
 
@@ -170,6 +173,7 @@ sub processGenericFile {
 
 sub processOneFASTA {
   my ($infile, $outfile, %xref) = @_;
+print "Process file $infile.\n";
   
   my $re = ($defline_col == 1) ? qr/>(\w+)/ : qr/>.*?\s+(.*)/;
   
