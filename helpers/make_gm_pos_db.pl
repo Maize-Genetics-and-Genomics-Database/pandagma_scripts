@@ -6,6 +6,7 @@
 #   salloc
 #   ml miniconda
 #   conda activate post-process
+#   ml sqlite3
 # 
 # history
 #   07/24/24  eskc  created

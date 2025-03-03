@@ -65,7 +65,7 @@ EOS
         if ($fields[$i] =~ /,/) {
           # tandem array may exist, check position
           my @tandems = get_tandems($fields[$i], $dbh);
-#print "All tandem arrays for this pan-gene:\n" . Dumper(@tandems) . "\n";
+#print "All tandem arrays for " . $fields[0] . ":\n" . Dumper(@tandems) . "\n";
           foreach my $tandem (@tandems) {
             my $name = sprintf("$prefix%05d", $count);
             if ((scalar @{$tandem}) > 1) {
@@ -96,9 +96,9 @@ sub get_db_connection {
   my $dbh = DBI->connect($dsn, $userid, $password, { RaiseError => 1 }) 
      or die $DBI::errstr;
 
+#print "Opened database successfully\n";
   return $dbh;
 }#get_db_connection
-
 
 sub get_tandems {
   my ($trans_str, $dbh) = @_;
@@ -144,5 +144,4 @@ sub get_tandems {
   
   return @tandems;
 }#get_tandems
-
 
