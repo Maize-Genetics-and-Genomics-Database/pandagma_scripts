@@ -1,6 +1,8 @@
 # file: restore_v3_ids.pl
 #
-# purpose: one-off script to restore temporary v3 ids back to the original ids
+# purpose: restore temporary v3 ids back to the original ids
+#          AND rename pan-genes, and possibly files if working on a directory
+#          (feature creep...)
 #
 # Input file format: 
 #   panID trans transChr transStart transEnd transStrand longPanID panChr panStart panEnd panStrand exemplar
@@ -107,6 +109,7 @@ sub processFASTA {
   my ($dir, $outdir, $prefix, $glob, %xref) = @_;
 
   opendir(my $dh, $dir) || die "Can't open directory $dir: $!";
+print "Read all files in '$dir' ...\n";   # This step can take A Long time.
   my @files = sort(grep { /$glob/ && -f "$dir/$_" } readdir($dh));
   closedir $dh;
 print "Found " . (scalar @files) . " in $dir matching $glob.\n";
@@ -118,7 +121,7 @@ print "Found " . (scalar @files) . " in $dir matching $glob.\n";
     my $outfile = "$outdir/$prefix$file";
     processOneFASTA("$dir/$file", $outfile, %xref);
     $count++;
-last if ($count > 0);
+#last if ($count > 0);
   }
 }#processFASTA
 
