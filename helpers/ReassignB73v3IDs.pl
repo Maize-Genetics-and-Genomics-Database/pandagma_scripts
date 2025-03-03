@@ -10,7 +10,6 @@
 
   use strict;
   use Getopt::Std;
-  use DBI;
   use Data::Dumper;
 
 
@@ -35,6 +34,8 @@ EOS
   if (!$infile) {
     die $usage;
   }
+#print "File type: $file_type\n";
+
 
   my %xref;
   open XREF, "<$xreffile" or die "\nUnable to open $xreffile: $!\n\n";
@@ -55,7 +56,7 @@ my ($line, $orig_id, $new_id);
 
 # Generic file format
 my $count =  0;
-if ($file_type eq 'generic' or $file_type eq 'fasta') {
+if ($file_type eq 'generic') {
   open IN, "<$infile" or die "\nUnable to open $infile: $!\n\n";
   while (<IN>) {
     chomp;
@@ -97,6 +98,30 @@ if ($file_type eq 'generic' or $file_type eq 'fasta') {
 #last if ($count > 200);
   }#each line
   close IN;
+}
+
+# FASTA
+if ($file_type eq 'fasta') {
+print "Reassign IDs for a FASTA file.\n";
+  open IN, "<$infile" or die "\nUnable to open $infile: $!\n\n";
+  while (<IN>) {
+    chomp;
+    $line = $_;
+#print "$line\n";
+    next if ($line =~ m/^#/);
+    if ($line =~ /^\>(.*)/) {
+      $orig_id = $1;
+      if ($new_id=translate_id($orig_id)) {
+#print "Convert [$orig_id] to [$new_id]\n";
+        print ">$new_id\n";
+      }
+    }
+    else {
+      print "$line\n";;
+    }
+    $count++;
+#last if ($count > 5);
+  }
 }
 
 # GFF file
