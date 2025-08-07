@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH -A maizegdb                            # user
 #SBATCH --job-name="pandagma-pan_zea"          # name of the job submitted
 #SBATCH --partition=short                      # name of the queue you are submitting job to
 #SBATCH -N 1                                   # number of nodes in this job
@@ -63,11 +64,11 @@ pandagma-pan.sh -c $CONFIG -s summarize
 
 ##########
 # Optional alignment and tree-construction steps
-#pandagma-pan -c $CONFIG -s align_cds
-#pandagma-pan -c $CONFIG -s align_protein
-#pandagma pan -c $CONFIG -s model_and_trim
-#pandagma pan -c $CONFIG -s calc_trees
-#pandagma pan -c $CONFIG -s xfr_aligns_trees
+#pandagma-pan.sh -c $CONFIG -s align_cds
+#pandagma-pan.sh -c $CONFIG -s align_protein
+#pandagma-pan.sh -c $CONFIG -s model_and_trim
+#pandagma-pan.sh -c $CONFIG -s calc_trees
+#pandagma-pan.sh -c $CONFIG -s xfr_aligns_trees
 
 ##########
 ## Optional work-directory cleanup steps

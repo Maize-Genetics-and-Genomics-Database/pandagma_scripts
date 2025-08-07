@@ -44,12 +44,12 @@ Also remember:  /90daydata/maizegdb  (more space)
 Available disk space: $ my_quotas
 
 Grab some cores before working:
-  $ scalloc -c [num cores]
+  $ scalloc -A maizegdb -c [num cores]
 
 Some conda commands
-  $ salloc
+  $ salloc -A maizegdb
   OR
-  $ salloc -N 1 -n 36 -t 2:00:00 -p short
+  $ salloc -A maizegdb -N 1 -n 36 -t 2:00:00 -p short
   $ ml miniconda
   $ conda list -n pandagma
   $ conda install -c bioconda -n pandagma perl-bio-tools-run-alignment-clustalw
@@ -97,10 +97,25 @@ $ sbatch [sbatch file]
 Prepare files for Pandagma
 *****************************************************************************************
 
-Limit CDS files to canonical transcripts
+GFF, canonical cds and protein FASTA files go into data_orig/
+Create directory data/
+
+Limit CDS files to canonical transcripts (should do this before moving files to Ceres)
+  1. Get list of names of canonical transcripts
+     If identified in GFF, pull names from there
+     Otherwise, use longest transcript: pandagma/bin/longest_variant_from_gff.pl 
+  2. Create file of canonical transcripts: support_scripts/utilities/FASTA/get_fasta_by_name
+  
+Append unique identifier to chrs, scaffolds, and contigs in GFF and/or bed files
+
+Create bed files: pandagma/bin/gff_to_bed7_mRNA.awk
+  
 Protein names need to match transcript names (i.e., _T***)
 
+Copy files to operate on from data_orig to data. (Not sure if data_orig is actually needed?)
+
 Preprocessing:
+Note that this will only capture overlaps in gene models tracked in the Chado schema.
   1. Review overlapping gene models 
       See pandagma_scripts/helers/find_overlapping_gene_models.pl
       CREATE TABLE chado.overlapping_gene_model (
@@ -125,7 +140,11 @@ Preprocessing:
 Run Pandagma
 *****************************************************************************************
 
+Review sbatch script
+
 Often wise to run ingest by itself, only once.
+
+$ sbatch sbatch_pan_zea_conda.sh
 
 
 ***********************************************
@@ -526,8 +545,12 @@ $ conda activate post-process
 
 
 *****************************************************************************************
-Classes of errors (8/29/24)
+Classes of errors
 *****************************************************************************************
+
+HASH UNDEFINED: 
+Often means files are out of order, or a file is missing. Check file order in config
+file. Look for missing files reported in slurm output.
 
 - There are some questionable groupings of gene models via method 1. How reliable was 
   the synteny analysis used when determining that two gene models are the same? Even 
