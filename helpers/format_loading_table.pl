@@ -19,16 +19,16 @@ use Data::Dumper;
 my $usage = <<EOS
 
     usage: 
-      perl format_pandagma_table.pl [prefix] [bedfile-directory] [working-directory]
+      perl format_pandagma_table.pl [prefix] [bedfile-directory] [working-directory] [output-directory]
       
     example:
-      perl format_loading_table.pl 'pan-zea.v2.' data/ .
+      perl format_loading_table.pl 'pan-zea.v2.' data/ work_pandagma/ .
     
 EOS
 ;
 
   
-  my ($prefix, $bedfiledir, $workdir) = @ARGV;
+  my ($prefix, $bedfiledir, $workdir, $outdir) = @ARGV;
   if (!$workdir) {
     die $usage;
   }
@@ -52,7 +52,6 @@ EOS
     while (<IN>) {
       chomp;chomp;
       @fields = split /\t/;
-#print $fields[3] . "\n";
       $positions{$fields[3]} = {
         'chromosome' => $fields[0],
         'start' => $fields[1],
@@ -67,13 +66,11 @@ EOS
   }
   print "Loaded " . scalar (keys %positions) . " positions\n";
 #print Dumper(%positions);
-#print "\n\npositions for Zd00001aa038416_T001:\n" . Dumper($positions{'Zd00001aa038416_T001'});
-#print "\n\npositions for Zd00001aa032704_T001:\n" . Dumper($positions{'Zd00001aa032704_T001'});
 
   # Get exemplar for each pan-gene
   print "\nGET EXEMPLARS\n";
   my %pan_gene_exemplars;
-  $filename = "$workdir/21_pan_fasta_clust_rep_cds.fna";
+  $filename = "$outdir/21_pan_fasta_clust_rep_cds.fna";
   open IN, "<$filename" or die "\nUnable to open $filename: $!\n\n";
   while (<IN>) {
     chomp;chomp;
@@ -87,11 +84,11 @@ EOS
 
   # Build loading table from 18_syn_pan_aug_extra.hsh.tsv (panID, trans)
   # panID	trans	transChr transStart	transEnd transStrand panChr panStart panEnd	panStrand	exemplar
-  print "\nWRITE TABLE $workdir/pandagma_load.txt\n";
+  print "\nWRITE TABLE $outdir/pandagma_load.txt\n";
   open OUT, ">$workdir/pandagma_load.txt";
   print OUT "panID\ttrans\ttransChr\ttransStart\ttransEnd\ttransStrand\tpanChr\tpanStart\tpanEnd\tpanStrand\texemplar\n";
 
-  $filename = "$workdir/18_syn_pan_aug_extra.hsh.tsv\n";
+  $filename = "$outdir/18_syn_pan_aug_extra.hsh.tsv\n";
   open IN, "<$filename" or die "\nUnable to open $filename: $!\n\n";
 
   $count = 0;
@@ -130,4 +127,4 @@ EOS
   close IN;
   close OUT;
 
-  print "\n\DONE\n\n";
+  print "\n\nformat_load_table.pl COMPLETED\n\n";
