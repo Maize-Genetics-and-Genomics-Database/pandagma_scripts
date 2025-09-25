@@ -55,18 +55,18 @@ EOS
     print "$file_count: load positions in $file\n";
     if ($file =~ /.gz$/) {
       `gunzip $file`;
-      print "file un-gzipped.\n";
+#print "file un-gzipped.\n";
       $file =~ s/(.*).gz$/$1/;
     }
     
     $sql= "BEGIN TRANSACTION;";
     $sth = $dbh->prepare($sql);
     $ret = $sth->execute();
-    print "Start transaction...\n";
+#print "Start transaction...\n";
     
     print "Read from '$file'\n";
     open BED, "<$file" or die "\nUnable to open $1: $!\n\n";
-print "Opened $file.\n";
+#print "Opened $file.\n";
     while (<BED>) {
       chomp;
       my @fields = split /\t/;
@@ -82,17 +82,17 @@ print "Opened $file.\n";
     $sql= "COMMIT;";
     $sth = $dbh->prepare($sql);
     $ret = $sth->execute();
-    print "...committed transaction with $count records.\n";
+#print "...committed transaction with $count records.\n";
     
     `gzip $file`;
-    print "gzipped file.\n\n";
+#print "gzipped file.\n\n";
 #last;
     $file_count++;
   }#each file
   
   $dbh->disconnect();
   
-  print "\n\n\nDONE\nProcessed $file_count files.\n\n";
+  print "\n\n\nmake_gm_pos_db.pl COMPLETED\nProcessed $file_count files.\n\n";
   
 
 
@@ -125,7 +125,7 @@ sub get_db_connection {
   my $dbh = DBI->connect($dsn, $userid, $password, { RaiseError => 1 }) 
      or die $DBI::errstr;
 
-  print "Opened database successfully\n";
+#print "Opened database successfully\n";
   return $dbh;
 }#get_db_connection
 
@@ -149,7 +149,7 @@ sub make_table {
       print $DBI::errstr . "\n";
       exit;
     }
-    print "Table $table_name exits. Truncated table\n";
+#print "Table $table_name exits. Truncated table\n";
   }
   else {
     $sql = qq(
@@ -167,7 +167,7 @@ sub make_table {
        print $DBI::errstr . "\n";
     } 
     else {
-       print "Table gene_model_positions was created successfully\n";
+#print "Table gene_model_positions was created successfully\n";
     }
   }
 }#make_table
