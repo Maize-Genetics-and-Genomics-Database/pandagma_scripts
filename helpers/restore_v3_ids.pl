@@ -1,7 +1,7 @@
 # file: restore_v3_ids.pl
 #
 # purpose: restore temporary v3 ids back to the original ids
-#          AND rename pan-genes, and possibly files if working on a directory
+#          AND rename pan-genes and files if working on a directory
 #          (feature creep...)
 #
 # Input file format: 
@@ -30,7 +30,7 @@ my $usage = <<EOS
       
     examples:
       perl restore_v3_ids.pl -t table data/v3_sref.txt 22_syn_pan_aug_extra_pctl25_posn.hsh.extended.header.tsv
-      perl restore_v3_ids.pl -d . -g pan.* -o mod -p pan-zea.v1. -t FASTA data/v3_xref.txt
+      perl restore_v3_ids.pl -d . -g pan.* -o mod -p pan-zea.v4. -t FASTA data/v3_xref.txt 21_pan_fasta_clust_rep_cds.fna
     
 EOS
 ;
@@ -54,8 +54,8 @@ EOS
   if (!$xreffile || (!$dir && !$infile)) {
     die $usage;
   }
-print "file_type: [$file_type], dir: [$dir], glob: [$glob], outdir: [$outdir]\,\n";
-print "prefix: [$prefix], file_type: [$file_type],\nxreffile: [$xreffile],\ninfile: [$infile]\n\n";
+#print "file_type: [$file_type], dir: [$dir], glob: [$glob], outdir: [$outdir]\,\n";
+#print "prefix: [$prefix], file_type: [$file_type],\nxreffile: [$xreffile],\ninfile: [$infile]\n\n";
 
   my %xref;
   open XREF, "<$xreffile" or die "\nUnable to open $xreffile: $1\n\n";
@@ -71,11 +71,11 @@ print "prefix: [$prefix], file_type: [$file_type],\nxreffile: [$xreffile],\ninfi
   }
   elsif ($file_type eq 'FASTA') {
     if ($infile && $infile ne '' && $dir eq '') {
-print "Process one file.\n";
+#print "Process one file.\n";
       processOneFASTA($infile, '', %xref);
     }
     else {
-print "Process all files in directory [$dir] that match [$glob].\n";
+#print "Process all files in directory [$dir] that match [$glob].\n";
       processFASTA($dir, $outdir, $prefix, $glob, %xref);
     }
   }
@@ -176,7 +176,7 @@ sub processGenericFile {
 
 sub processOneFASTA {
   my ($infile, $outfile, %xref) = @_;
-print "Process file $infile.\n";
+#print "Process file $infile.\n";
   
   my $re = ($defline_col == 1) ? qr/>(\w+)/ : qr/>.*?\s+(.*)/;
   
